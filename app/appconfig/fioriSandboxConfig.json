@@ -1,0 +1,137 @@
+{
+  "defaultRenderer": "fiori2",
+  "renderers": {
+    "fiori2": {
+      "componentData": {
+        "config": {
+          "rootIntent": "Shell-home"
+        }
+      }
+    }
+  },
+  "services": {
+    "LaunchPage": {
+      "adapter": {
+        "config": {
+          "catalogs": [
+            {
+              "id": "supplier_catalog",
+              "title": "Supplier Management",
+              "tiles": [
+                {
+                  "id": "supplier_portal_tile",
+                  "title": "Supplier Portal",
+                  "size": "1x1",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "chipId": "supplier_portal_tile",
+                    "title": "Supplier Portal",
+                    "info": "Supplier application portal",
+                    "icon": "sap-icon://employee",
+                    "targetURL": "#SupplierPortal-display"
+                  }
+                },
+                {
+                  "id": "supplier_approvals_tile",
+                  "title": "Supplier Approvals",
+                  "size": "1x1",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "chipId": "supplier_approvals_tile",
+                    "title": "Supplier Approvals",
+                    "info": "Review supplier applications",
+                    "icon": "sap-icon://accept",
+                    "targetURL": "#SupplierApprovals-display"
+                  }
+                }
+              ]
+            }
+          ],
+          "groups": [
+            {
+              "id": "supplier_group",
+              "title": "Supplier Management",
+              "isPreset": true,
+              "isVisible": true,
+              "isGroupLocked": true,
+              "tiles": [
+                {
+                  "id": "supplier_portal_tile",
+                  "title": "Supplier Portal",
+                  "size": "1x1",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "chipId": "supplier_portal_tile",
+                    "title": "Supplier Portal",
+                    "info": "Supplier application portal",
+                    "icon": "sap-icon://employee",
+                    "targetURL": "#SupplierPortal-display"
+                  }
+                },
+                {
+                  "id": "supplier_approvals_tile",
+                  "title": "Supplier Approvals",
+                  "size": "1x1",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "chipId": "supplier_approvals_tile",
+                    "title": "Supplier Approvals",
+                    "info": "Review supplier applications",
+                    "icon": "sap-icon://accept",
+                    "targetURL": "#SupplierApprovals-display"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "NavTargetResolution": {
+      "config": {
+        "enableClientSideTargetResolution": true
+      }
+    },
+    "ClientSideTargetResolution": {
+      "adapter": {
+        "config": {
+          "inbounds": {
+            "supplierPortalDisplay": {
+              "semanticObject": "SupplierPortal",
+              "action": "display",
+              "title": "Supplier Portal",
+              "signature": {
+                "parameters": {},
+                "additionalParameters": "allowed"
+              },
+              "resolutionResult": {
+                "applicationType": "URL",
+                "url": "/supplier-portal/webapp/index.html"
+              }
+            },
+            "supplierApprovalsDisplay": {
+              "semanticObject": "SupplierApprovals",
+              "action": "display",
+              "title": "Supplier Approvals",
+              "signature": {
+                "parameters": {},
+                "additionalParameters": "allowed"
+              },
+              "resolutionResult": {
+                "applicationType": "URL",
+                "url": "/supplier-approvals/webapp/index.html"
+              }
+            }
+          }
+        }
+      }
+    },
+    "UserInfo": {
+      "adapter": {
+        "config": {
+          "user": {}
+        }
+      }
+    }
+  }
+}

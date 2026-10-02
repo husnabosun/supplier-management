@@ -1,0 +1,157 @@
+<mvc:View
+    controllerName="supplier.portal.controller.Application"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:u="sap.ui.unified"
+    xmlns:suite="sap.suite.ui.commons"
+    xmlns="sap.m">
+    <Page title="{i18n>application.pageTitle}" showHeader="true">
+        <content>
+
+            <!-- ================= FORM (visible when the user can submit or reapply )================= -->
+            <VBox id="formSection" class="sapUiResponsiveMargin" visible="{app>/showForm}">
+                <Panel
+                    width="100%"
+                    headerText="{i18n>application.formTitle}"
+                    class="sapUiResponsiveMargin">
+                    <content>
+                        <MessageStrip
+                            id="reapplyInfo"
+                            type="Warning"
+                            showIcon="true"
+                            showCloseButton="false"
+                            class="sapUiSmallMarginBottom"
+                            text="{app>/reapplyInfo}"
+                            visible="{app>/showReapplyInfo}" />
+
+                        <f:SimpleForm
+                            editable="true"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+                            adjustLabelSpan="false"
+                            columnsXL="1" columnsL="1" columnsM="1">
+                            <f:content>
+
+                        <Label text="{i18n>application.companyNameLabel}" />
+                        <Input id="companyNameInput" required="true" editable="{= !${app>/isReapplyMode} }" />
+
+                        <Label text="{i18n>application.contactPersonLabel}" />
+                        <Input id="contactPersonInput" required="true" editable="{= !${app>/isReapplyMode} }" />
+
+                        <Label text="{i18n>application.phoneLabel}" />
+                        <Input id="phoneInput" type="Tel" editable="{app>/editableFields/phone}" />
+
+                        <Label text="{i18n>application.countryLabel}" />
+                        <Input id="countryInput" editable="{app>/editableFields/country}" />
+
+                        <Label text="{i18n>application.categoryLabel}" />
+                        <Select id="categorySelect" enabled="{app>/editableFields/category}">
+                            <core:Item xmlns:core="sap.ui.core" key="" text="{i18n>application.categoryPleaseSelect}" />
+                            <core:Item xmlns:core="sap.ui.core" key="Hardware" text="{i18n>application.categoryHardware}" />
+                            <core:Item xmlns:core="sap.ui.core" key="Software" text="{i18n>application.categorySoftware}" />
+                            <core:Item xmlns:core="sap.ui.core" key="Services" text="{i18n>application.categoryServices}" />
+                            <core:Item xmlns:core="sap.ui.core" key="Consulting" text="{i18n>application.categoryConsulting}" />
+                        </Select>
+
+                        <Label text="{i18n>application.taxNumberLabel}" />
+                        <Input id="taxNumberInput" editable="{app>/editableFields/taxNumber}" />
+
+                        <Label text="{i18n>application.websiteLabel}" />
+                        <Input id="websiteInput" type="Text" editable="{app>/editableFields/website}" />
+
+                        <Label text="{i18n>application.addressLabel}" />
+                        <TextArea id="addressInput" rows="2" editable="{app>/editableFields/address}" />
+
+                        <Label text="{i18n>application.notesLabel}" />
+                        <TextArea id="notesInput" rows="3" editable="{app>/editableFields/notes}" />
+
+                        <Label text="{i18n>application.certificateLabel}" />
+                        <VBox>
+                            <Text text="{i18n>application.certificateHint}" class="sapUiTinyMarginBottom" />
+                            <u:FileUploader
+                                id="certificateUploader"
+                                required="true"
+                                fileType="pdf"
+                                mimeType="application/pdf"
+                                maximumFileSize="10240"
+                                change=".onCertificateChange"
+                                typeMissmatch=".onFileTypeMismatch"
+                                fileSizeExceed=".onFileSizeExceed"
+                                placeholder="{i18n>application.certificatePlaceholder}" />
+                        </VBox>
+
+                            </f:content>
+                        </f:SimpleForm>
+
+                        <MessageStrip
+                            id="formError"
+                            type="Error"
+                            showIcon="true"
+                            class="sapUiSmallMarginTop"
+                            visible="false" />
+
+                        <Button
+                            text="{i18n>application.submitButton}"
+                            type="Emphasized"
+                            class="sapUiMediumMarginTop"
+                            press=".onSubmitPress" />
+                    </content>
+                </Panel>
+            </VBox>
+
+            <!-- ================= PROCESS FLOW ================= -->
+            <VBox id="statusSection" class="sapUiMediumMargin" visible="{app>/showStatus}" alignItems="Center">
+                <ObjectHeader
+                    title="{app>/companyName}"
+                    class="sapUiMediumMarginBottom" />
+
+                <HBox alignItems="Center" justifyContent="Center">
+                    <suite:ProcessFlow
+                        id="processFlow"
+                        nodes="{pf>/nodes}"
+                        lanes="{pf>/lanes}"
+                        scrollable="false">
+                        <suite:nodes>
+                            <suite:ProcessFlowNode
+                                laneId="{pf>laneId}"
+                                nodeId="{pf>nodeId}"
+                                title="{pf>title}"
+                                state="{pf>state}"
+                                stateText="{pf>stateText}"
+                                texts="{pf>texts}"
+                                children="{pf>children}" />
+                        </suite:nodes>
+                        <suite:lanes>
+                            <suite:ProcessFlowLaneHeader
+                                laneId="{pf>laneId}"
+                                text="{pf>text}"
+                                position="{pf>position}" />
+                        </suite:lanes>
+                    </suite:ProcessFlow>
+                </HBox>
+
+                <MessageStrip
+                    id="rejectionStrip"
+                    type="Error"
+                    showIcon="true"
+                    class="sapUiMediumMarginTop"
+                    visible="{app>/showRejectionComment}"
+                    text="{app>/rejectionMessage}" />
+
+                <Button
+                    text="{i18n>application.reapplyButton}"
+                    type="Emphasized"
+                    class="sapUiMediumMarginTop"
+                    visible="{app>/showReapply}"
+                    press=".onReapplyPress" />
+            </VBox>
+
+            <Button
+                text="{i18n>application.logoutButton}"
+                type="Transparent"
+                class="sapUiMediumMargin"
+                press=".onLogout" />
+
+        </content>
+    </Page>
+</mvc:View>

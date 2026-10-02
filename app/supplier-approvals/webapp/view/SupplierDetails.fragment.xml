@@ -1,0 +1,184 @@
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <Dialog
+        id="supplierDetailsDialog"
+        title="{i18n>approvals.details.title}"
+        contentWidth="45rem"
+        resizable="true"
+        draggable="true"
+        stretchOnPhone="true"
+        initialFocus="sdBtnClose">
+        <content>
+            <ObjectHeader
+                id="sdObjectHeader"
+                title="{details>/companyName}"
+                number="{path: 'details>/status', formatter: '.formatStatusText'}"
+                class="sapUiSmallMarginBottom" />
+            <HBox id="sdProcessFlowBox" alignItems="Center" justifyContent="Center" class="sapUiMediumMarginTop sapUiMediumMarginBottom">
+                <suite:ProcessFlow
+                    id="approvalProcessFlow"
+                    xmlns:suite="sap.suite.ui.commons"
+                    nodes="{pf>/nodes}"
+                    lanes="{pf>/lanes}"
+                    scrollable="false">
+                    <suite:nodes>
+                        <suite:ProcessFlowNode
+                            laneId="{pf>laneId}"
+                            nodeId="{pf>nodeId}"
+                            title="{pf>title}"
+                            state="{pf>state}"
+                            stateText="{pf>stateText}"
+                            texts="{pf>texts}"
+                            children="{pf>children}" />
+                    </suite:nodes>
+                    <suite:lanes>
+                        <suite:ProcessFlowLaneHeader
+                            laneId="{pf>laneId}"
+                            text="{pf>text}"
+                            position="{pf>position}" />
+                    </suite:lanes>
+                </suite:ProcessFlow>
+            </HBox>
+            <Button
+                id="sdBtnViewCertificate"
+                text="{i18n>approvals.details.viewCertificate}"
+                icon="sap-icon://pdf-attachment"
+                type="Transparent"
+                class="sapUiMediumMarginBegin sapUiMediumMarginBottom"
+                press=".onViewCertificate" />
+            <f:SimpleForm
+                id="sdSimpleForm"
+                xmlns:f="sap.ui.layout.form"
+                editable="false"
+                layout="ResponsiveGridLayout"
+                adjustLabelSpan="false"
+                labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
+                emptySpanXL="0" emptySpanL="0" emptySpanM="0" emptySpanS="0"
+                columnsXL="2" columnsL="2" columnsM="1"
+                singleContainerFullSize="false"
+                class="sapUiMediumMarginTop">
+                <f:content>
+                    <Label text="{i18n>approvals.colContactPerson}" />
+                    <Text text="{details>/contactPerson}" />
+
+                    <Label text="{i18n>approvals.colEmail}" />
+                    <Text text="{details>/email}" />
+
+                    <Label text="{i18n>approvals.colPhone}" />
+                    <Text text="{details>/phone}" />
+
+                    <Label text="{i18n>approvals.colCountry}" />
+                    <Text text="{details>/country}" />
+
+                    <Label text="{i18n>approvals.colCategory}" />
+                    <Text text="{path: 'details>/category', formatter: '.formatCategory'}" />
+
+                    <Label text="{i18n>approvals.colTaxNumber}" />
+                    <Text text="{details>/taxNumber}" />
+
+                    <Label text="{i18n>approvals.colWebsite}" />
+                    <Text text="{details>/website}" />
+
+                    <Label text="{i18n>approvals.colAddress}" />
+                    <Text text="{details>/address}" />
+
+                    <Label text="{i18n>approvals.colNotes}" />
+                    <Text text="{details>/notes}" />
+
+                    <Label text="{i18n>approvals.colSubmissionDate}" />
+                    <Text text="{path: 'details>/submittedAt', formatter: '.formatSubmissionDate'}" />
+
+                    <Label text="{i18n>approvals.colStatus}" />
+                    <ObjectStatus
+                        text="{path: 'details>/status', formatter: '.formatStatusText'}"
+                        state="{path: 'details>/status', formatter: '.formatter.statusState'}" />
+
+                    <Label text="{i18n>approvals.details.rejectionComment}" visible="{= ${details>/status} === 'REJECTED' }" />
+                    <Text text="{rejectionComment}" visible="{= ${details>/status} === 'REJECTED' }" />
+                </f:content>
+            </f:SimpleForm>
+
+            <MessageStrip
+                id="sdAiMessageStrip"
+                type="{details>/aiMessageType}"
+                showIcon="true"
+                class="sapUiMediumMarginTop"
+                text="{details>/aiMessage}"
+                visible="{details>/showAiMessage}" />
+
+            <Panel
+                id="sdRejectSection"
+                headerText="{i18n>approvals.details.rejectPanelTitle}"
+                class="sapUiMediumMarginTop"
+                visible="{reject>/active}">
+                <VBox id="sdRejectCommentBox" class="sapUiSmallMargin">
+                    <Label
+                        id="sdRejectCommentLabel"
+                        text="{i18n>approvals.details.rejectionComment}"
+                        labelFor="sdRejectCommentInput"
+                        required="true" />
+                    <TextArea
+                        id="sdRejectCommentInput"
+                        width="100%"
+                        rows="3"
+                        placeholder="{i18n>approvals.details.commentPlaceholder}"
+                        value="{reject>/comment}"
+                        liveChange=".onRejectCommentChange" />
+                </VBox>
+                <VBox id="sdRevisionFieldsBox" class="sapUiSmallMargin">
+                    <Label id="sdRevisionListLabel" text="{i18n>approvals.details.revisionListHeader}" class="sapUiSmallMarginBottom" />
+                    <CheckBox id="sdChkPhone" text="{i18n>approvals.details.revisionPhone}" selected="{reject>/fields/phone}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkCountry" text="{i18n>approvals.details.revisionCountry}" selected="{reject>/fields/country}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkCategory" text="{i18n>approvals.details.revisionCategory}" selected="{reject>/fields/category}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkTaxNumber" text="{i18n>approvals.details.revisionTaxNumber}" selected="{reject>/fields/taxNumber}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkWebsite" text="{i18n>approvals.details.revisionWebsite}" selected="{reject>/fields/website}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkAddress" text="{i18n>approvals.details.revisionAddress}" selected="{reject>/fields/address}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkNotes" text="{i18n>approvals.details.revisionNotes}" selected="{reject>/fields/notes}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkCertificate" text="{i18n>approvals.details.revisionCertificate}" selected="{reject>/fields/certificate}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                </VBox>
+            </Panel>
+        </content>
+        <buttons>
+            <Button
+                id="sdBtnApprove"
+                text="{i18n>approvals.details.btnApprove}"
+                type="Accept"
+                visible="{= ${details>/status} === 'SUBMITTED' &amp;&amp; !${reject>/active} }"
+                press=".onApprovePress" />
+            <Button
+                id="sdBtnReject"
+                text="{i18n>approvals.details.btnReject}"
+                type="Reject"
+                visible="{= ${details>/status} === 'SUBMITTED' &amp;&amp; !${reject>/active} }"
+                press=".onRejectPress" />
+            <Button
+                id="sdBtnConfirmReject"
+                text="{i18n>approvals.details.btnConfirmReject}"
+                type="Reject"
+                visible="{reject>/active}"
+                enabled="{reject>/confirmEnabled}"
+                press=".onConfirmReject" />
+            <Button
+                id="sdBtnCancelReject"
+                text="{i18n>approvals.details.btnCancel}"
+                type="Transparent"
+                visible="{reject>/active}"
+                press=".onCancelReject" />
+            <Button
+                id="sdBtnAnalyzeAI"
+                text="{i18n>approvals.details.btnAnalyzeAI}"
+                icon="sap-icon://learning-assistant"
+                type="Emphasized"
+                busy="{details>/aiBusy}"
+                enabled="{= !${details>/aiBusy} }"
+                visible="{= ${details>/status} === 'SUBMITTED' &amp;&amp; !${reject>/active} }"
+                press=".onAnalyzeAI" />
+            <Button
+                id="sdBtnClose"
+                text="{i18n>approvals.details.btnClose}"
+                type="Transparent"
+                press=".onDetailsClose" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

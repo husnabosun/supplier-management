@@ -1,0 +1,11 @@
+{
+  "name": "supplier-management-approuter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@sap/approuter": "^20.8.0"
+  }
+}

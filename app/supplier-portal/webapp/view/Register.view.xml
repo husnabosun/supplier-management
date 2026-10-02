@@ -1,0 +1,76 @@
+<mvc:View
+    controllerName="supplier.portal.controller.Register"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page title="{i18n>register.pageTitle}" showHeader="true">
+        <content>
+            <VBox class="sapUiResponsiveMargin" alignItems="Center">
+                <Panel width="26rem" headerText="{i18n>register.formTitle}" class="sapUiResponsiveMargin">
+                    <content>
+                <VBox width="100%">
+                    <Label text="{i18n>common.email}" labelFor="registerEmail" />
+                    <Input id="registerEmail" type="Email" placeholder="{i18n>common.emailPlaceholder}" />
+
+                    <Label text="{i18n>common.password}" labelFor="registerPassword" class="sapUiTinyMarginTop" />
+                    <HBox alignItems="Center">
+                        <Input
+                            id="registerPassword"
+                            type="Password"
+                            width="100%"
+                            liveChange=".onPasswordLiveChange" />
+                        <Button
+                            id="togglePasswordBtn"
+                            icon="sap-icon://show"
+                            type="Transparent"
+                            tooltip="{i18n>register.showHidePasswordTooltip}"
+                            press=".onTogglePasswordVisibility" />
+                    </HBox>
+
+                    <VBox class="sapUiTinyMarginTop" visible="{rules>/visible}">
+                        <ObjectStatus
+                            text="{i18n>register.ruleMinLength}"
+                            icon="{= ${rules>/minLength} ? 'sap-icon://accept' : 'sap-icon://decline'}"
+                            state="{= ${rules>/minLength} ? 'Success' : 'Error'}" />
+                        <ObjectStatus
+                            text="{i18n>register.ruleUppercase}"
+                            icon="{= ${rules>/uppercase} ? 'sap-icon://accept' : 'sap-icon://decline'}"
+                            state="{= ${rules>/uppercase} ? 'Success' : 'Error'}" />
+                        <ObjectStatus
+                            text="{i18n>register.ruleLowercase}"
+                            icon="{= ${rules>/lowercase} ? 'sap-icon://accept' : 'sap-icon://decline'}"
+                            state="{= ${rules>/lowercase} ? 'Success' : 'Error'}" />
+                        <ObjectStatus
+                            text="{i18n>register.ruleDigit}"
+                            icon="{= ${rules>/digit} ? 'sap-icon://accept' : 'sap-icon://decline'}"
+                            state="{= ${rules>/digit} ? 'Success' : 'Error'}" />
+                        <ObjectStatus
+                            text="{i18n>register.ruleSpecial}"
+                            icon="{= ${rules>/special} ? 'sap-icon://accept' : 'sap-icon://decline'}"
+                            state="{= ${rules>/special} ? 'Success' : 'Error'}" />
+                    </VBox>
+
+                    <MessageStrip
+                        id="registerError"
+                        type="Error"
+                        showIcon="true"
+                        class="sapUiSmallMarginTop"
+                        visible="false" />
+
+                    <Button
+                        text="{i18n>register.button}"
+                        type="Emphasized"
+                        class="sapUiMediumMarginTop"
+                        press=".onRegisterPress" />
+
+                    <Button
+                        text="{i18n>register.goToLogin}"
+                        type="Transparent"
+                        class="sapUiTinyMarginTop"
+                        press=".onNavToLogin" />
+                </VBox>
+                    </content>
+                </Panel>
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

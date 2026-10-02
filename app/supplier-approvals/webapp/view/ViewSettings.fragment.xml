@@ -1,0 +1,25 @@
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <ViewSettingsDialog
+        id="viewSettingsDialog"
+        confirm=".onSettingsConfirm"
+        resetFilters=".onSettingsReset">
+        <sortItems>
+            <ViewSettingsItem key="companyName" text="{i18n>approvals.colCompanyName}" />
+            <ViewSettingsItem key="contactPerson" text="{i18n>approvals.colContactPerson}" />
+            <ViewSettingsItem key="submittedAt" text="{i18n>approvals.colSubmissionDate}" />
+            <ViewSettingsItem key="status" text="{i18n>approvals.colStatus}" />
+        </sortItems>
+        <filterItems>
+            <ViewSettingsFilterItem key="category" text="{i18n>approvals.colCategory}" multiSelect="true">
+                <items>
+                    <ViewSettingsItem key="Hardware" text="{i18n>approvals.categoryHardware}" />
+                    <ViewSettingsItem key="Software" text="{i18n>approvals.categorySoftware}" />
+                    <ViewSettingsItem key="Services" text="{i18n>approvals.categoryServices}" />
+                    <ViewSettingsItem key="Consulting" text="{i18n>approvals.categoryConsulting}" />
+                </items>
+            </ViewSettingsFilterItem>
+        </filterItems>
+    </ViewSettingsDialog>
+</core:FragmentDefinition>

@@ -1,0 +1,65 @@
+{
+  "welcomeFile": "/index.html",
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "^/user-api(.*)$",
+      "target": "$1",
+      "service": "sap-approuter-userapi",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/odata/v4/supplier/(register|login|submitApplication|reapplyApplication)$",
+      "target": "/odata/v4/supplier/$1",
+      "destination": "cap-backend",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/odata/v4/supplier/(myApplicationStatus|myApplicationDetails)(\\(.*\\))$",
+      "target": "/odata/v4/supplier/$1$2",
+      "destination": "cap-backend",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/$",
+      "target": "/index.html",
+      "localDir": "../app",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/index.html$",
+      "target": "/index.html",
+      "localDir": "../app",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/appconfig/(.*)$",
+      "target": "/appconfig/$1",
+      "localDir": "../app",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/supplier-portal/(.*)$",
+      "target": "/supplier-portal/$1",
+      "localDir": "../app",
+      "authenticationType": "none"
+    },
+    {
+      "source": "^/supplier-approvals/(.*)$",
+      "target": "/supplier-approvals/$1",
+      "localDir": "../app",
+      "authenticationType": "xsuaa",
+      "scope": ["$XSAPPNAME.Approval"]
+    },
+    {
+      "source": "^/odata/(.*)$",
+      "target": "/odata/$1",
+      "destination": "cap-backend",
+      "authenticationType": "xsuaa",
+      "scope": ["$XSAPPNAME.Approval"],
+      "csrfProtection": true
+    }
+  ]
+}

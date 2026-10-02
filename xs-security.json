@@ -1,0 +1,33 @@
+{
+  "xsappname": "supplier-management",
+  "tenant-mode": "dedicated",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Approval",
+      "description": "Approve supplier applications"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Approval",
+      "description": "Supplier application approver",
+      "scope-references": [
+        "$XSAPPNAME.Approval"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "SupplierApprover",
+      "description": "Supplier application approvers",
+      "role-template-references": [
+        "$XSAPPNAME.Approval"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "http://localhost:5000/**"
+    ]
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "supplier.portal",
+    "type": "application",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "title": "{{application.portalTitle}}",
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/supplier/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "supplier.portal.view.App",
+      "type": "XML",
+      "id": "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.layout": {},
+        "sap.ui.unified": {},
+        "sap.suite.ui.commons": {}
+      }
+    },
+    "models": {
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "synchronizationMode": "None",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "supplier.portal.i18n.i18n",
+          "supportedLocales": ["", "en", "tr"],
+          "fallbackLocale": "en"
+        }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "viewPath": "supplier.portal.view",
+        "controlId": "app",
+        "controlAggregation": "pages",
+        "transition": "slide",
+        "async": true
+      },
+      "routes": [
+        { "pattern": "", "name": "login", "target": "login" },
+        { "pattern": "register", "name": "register", "target": "register" },
+        { "pattern": "application", "name": "application", "target": "application" }
+      ],
+      "targets": {
+        "login": { "viewName": "Login", "viewId": "login" },
+        "register": { "viewName": "Register", "viewId": "register" },
+        "application": { "viewName": "Application", "viewId": "application" }
+      }
+    }
+  }
+}

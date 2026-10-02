@@ -1,0 +1,88 @@
+<mvc:View
+    controllerName="supplier.approvals.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page title="{i18n>approvals.pageTitle}" showHeader="true">
+        <content>
+            <IconTabBar
+                id="statusTabBar"
+                class="sapUiResponsiveContentPadding"
+                select=".onTabSelect">
+                <items>
+                    <IconTabFilter key="all" text="{i18n>approvals.tabAll}" />
+                    <IconTabFilter key="SUBMITTED" text="{i18n>approvals.tabPending}" />
+                    <IconTabFilter key="APPROVED" text="{i18n>approvals.tabApproved}" />
+                    <IconTabFilter key="REJECTED" text="{i18n>approvals.tabRejected}" />
+                </items>
+            </IconTabBar>
+
+            <Toolbar class="sapUiResponsiveMargin sapUiSmallMarginBottom">
+                <SearchField
+                    id="searchField"
+                    width="20rem"
+                    placeholder="{i18n>approvals.searchPlaceholder}"
+                    liveChange=".onSearch" />
+                <ToolbarSpacer />
+                <Button
+                    text="{i18n>approvals.clearFiltersButton}"
+                    icon="sap-icon://decline"
+                    type="Transparent"
+                    visible="{ui>/anyFilterActive}"
+                    press=".onClearFilters" />
+                <Button
+                    icon="sap-icon://action-settings"
+                    type="Transparent"
+                    tooltip="{i18n>approvals.settingsTooltip}"
+                    press=".onSettingsPress" />
+                <Button
+                    icon="sap-icon://table-column"
+                    type="Transparent"
+                    tooltip="{i18n>approvals.columnsTooltip}"
+                    press=".onColumnsPress" />
+            </Toolbar>
+
+            <Table
+                id="suppliersTable"
+                class="sapUiResponsiveMargin"
+                growing="true"
+                growingThreshold="20"
+                noDataText="{i18n>approvals.noDataText}"
+                items="{path: '/Suppliers', parameters: { $select: 'ID,companyName,contactPerson,email,submittedAt,status,phone,country,category,taxNumber,website,address,notes,rejectionComment' }, sorter: { path: 'submittedAt', descending: true }}">
+                <columns>
+                    <Column><Text text="{i18n>approvals.colCompanyName}" /></Column>
+                    <Column><Text text="{i18n>approvals.colContactPerson}" /></Column>
+                    <Column><Text text="{i18n>approvals.colEmail}" /></Column>
+                    <Column><Text text="{i18n>approvals.colSubmissionDate}" /></Column>
+                    <Column><Text text="{i18n>approvals.colStatus}" /></Column>
+                    <Column visible="{ui>/columns/phone}"><Text text="{i18n>approvals.colPhone}" /></Column>
+                    <Column visible="{ui>/columns/country}"><Text text="{i18n>approvals.colCountry}" /></Column>
+                    <Column visible="{ui>/columns/category}"><Text text="{i18n>approvals.colCategory}" /></Column>
+                    <Column visible="{ui>/columns/taxNumber}"><Text text="{i18n>approvals.colTaxNumber}" /></Column>
+                    <Column visible="{ui>/columns/website}"><Text text="{i18n>approvals.colWebsite}" /></Column>
+                    <Column visible="{ui>/columns/address}"><Text text="{i18n>approvals.colAddress}" /></Column>
+                    <Column visible="{ui>/columns/notes}"><Text text="{i18n>approvals.colNotes}" /></Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation" press=".onRowPress">
+                        <cells>
+                            <Text text="{companyName}" />
+                            <Text text="{contactPerson}" />
+                            <Text text="{email}" />
+                            <Text text="{path: 'submittedAt', formatter: '.formatSubmissionDate'}" />
+                            <ObjectStatus
+                                text="{path: 'status', formatter: '.formatStatusText'}"
+                                state="{path: 'status', formatter: '.formatter.statusState'}" />
+                            <Text text="{phone}" />
+                            <Text text="{country}" />
+                            <Text text="{path: 'category', formatter: '.formatCategory'}" />
+                            <Text text="{taxNumber}" />
+                            <Text text="{website}" />
+                            <Text text="{address}" />
+                            <Text text="{notes}" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+</mvc:View>

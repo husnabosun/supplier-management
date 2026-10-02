@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management</title>
+    <script>
+        (async function () {
+            const response = await fetch("/appconfig/fioriSandboxConfig.json", {
+                credentials: "same-origin"
+            });
+            const config = await response.json();
+
+            try {
+                const userResponse = await fetch("/user-api/currentUser", {
+                    credentials: "same-origin"
+                });
+                if (userResponse.ok) {
+                    const currentUser = await userResponse.json();
+                    const fullName = currentUser.name || [currentUser.firstname, currentUser.lastname].filter(Boolean).join(" ");
+                    config.services.UserInfo.adapter.config.user = {
+                        id: currentUser.name || currentUser.email,
+                        firstName: currentUser.firstname || "",
+                        lastName: currentUser.lastname || "",
+                        fullName: fullName || currentUser.email || "",
+                        email: currentUser.email || ""
+                    };
+                }
+            } catch (error) {
+                // Keep the shell usable when user information is temporarily unavailable.
+            }
+
+            window["sap-ushell-config"] = config;
+            const bootstrap = document.createElement("script");
+            bootstrap.id = "sap-ui-bootstrap";
+            bootstrap.src = "https://sapui5.hana.ondemand.com/resources/sap-ui-core.js";
+            bootstrap.setAttribute("data-sap-ui-libs", "sap.m,sap.ushell");
+            bootstrap.setAttribute("data-sap-ui-theme", "sap_horizon");
+            bootstrap.setAttribute("data-sap-ui-compatVersion", "edge");
+            bootstrap.setAttribute("data-sap-ui-async", "true");
+            bootstrap.setAttribute("data-sap-ui-onInit", "module:sap/ushell/shells/sandbox/fioriSandbox");
+            bootstrap.setAttribute("data-sap-ui-xx-waitForTheme", "init");
+            document.head.appendChild(bootstrap);
+        })();
+    </script>
+</head>
+<body class="sapUiBody" id="content"></body>
+</html>
