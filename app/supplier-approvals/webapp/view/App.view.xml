@@ -2,8 +2,22 @@
     controllerName="supplier.approvals.controller.App"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="{i18n>approvals.pageTitle}" showHeader="true">
-        <content>
+    <App>
+    <pages>
+    <Page showHeader="true">
+        <customHeader>
+            <Bar>
+                <contentRight>
+                    <HBox alignItems="Center" class="sapUiTinyMarginTopBottom sapUiSmallMarginEnd">
+                        <Image src="../../assets/abicsLogo.png" height="1.75rem" />
+                    </HBox>
+                </contentRight>
+                <contentLeft>
+                    <Title text="{i18n>approvals.pageTitle}" class="sapUiSmallMarginBegin" />
+                </contentLeft>
+            </Bar>
+        </customHeader>
+                <content>
             <IconTabBar
                 id="statusTabBar"
                 class="sapUiResponsiveContentPadding"
@@ -26,11 +40,12 @@
                 <Button
                     text="{i18n>approvals.clearFiltersButton}"
                     icon="sap-icon://decline"
+                    tooltip="{i18n>approvals.clearFiltersTooltip}"
                     type="Transparent"
                     visible="{ui>/anyFilterActive}"
                     press=".onClearFilters" />
                 <Button
-                    icon="sap-icon://action-settings"
+                    icon="sap-icon://sort"
                     type="Transparent"
                     tooltip="{i18n>approvals.settingsTooltip}"
                     press=".onSettingsPress" />
@@ -83,6 +98,14 @@
                     </ColumnListItem>
                 </items>
             </Table>
+
+            <Button
+                text="{i18n>approvals.logoutButton}"
+                type="Transparent"
+                class="sapUiMediumMargin"
+                press=".onLogout" />
         </content>
     </Page>
+    </pages>
+    </App>
 </mvc:View>

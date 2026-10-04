@@ -1,11 +1,25 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], function (Controller) {
+    "sap/ui/core/mvc/Controller",
+    "../model/errorMapper"
+], function (Controller, errorMapper) {
     "use strict";
 
     return Controller.extend("supplier.portal.controller.Login", {
 
         onInit: function () {},
+
+        onTogglePasswordVisibility: function () {
+            const oInput = this.byId("loginPassword");
+            const bIsPassword = oInput.getType() === "Password";
+
+            oInput.setType(bIsPassword ? "Text" : "Password");
+            const sIcon = bIsPassword ? "sap-icon://hide" : "sap-icon://show";
+            oInput.setValueHelpIconSrc(sIcon);
+            const oIcon = oInput._getValueHelpIcon && oInput._getValueHelpIcon();
+            if (oIcon) {
+                oIcon.setSrc(sIcon);
+            }
+        },
 
         onLoginPress: async function () {
             const sEmail = this.byId("loginEmail").getValue();
@@ -25,7 +39,7 @@ sap.ui.define([
                 const data = await response.json();
 
                 if (!response.ok) {
-                    oErrorStrip.setText(data.error ? data.error.message : oBundle.getText("login.failedGeneric"));
+                    oErrorStrip.setText(data.error ? errorMapper.map(data.error.message, oBundle) : oBundle.getText("login.failedGeneric"));
                     oErrorStrip.setVisible(true);
                     return;
                 }

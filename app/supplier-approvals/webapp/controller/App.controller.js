@@ -6,8 +6,9 @@ sap.ui.define([
     "sap/ui/model/FilterOperator",
     "sap/ui/model/Sorter",
     "sap/m/MessageToast",
-    "../model/formatter"
-], function (Controller, Fragment, JSONModel, Filter, FilterOperator, Sorter, MessageToast, formatter) {
+    "../model/formatter",
+    "../model/errorMapper"
+], function (Controller, Fragment, JSONModel, Filter, FilterOperator, Sorter, MessageToast, formatter, errorMapper) {
     "use strict";
 
     const DEFAULT_COLUMNS = {
@@ -19,6 +20,16 @@ sap.ui.define([
         address: false,
         notes: false
     };
+    const MIN_REJECTION_COMMENT_LENGTH = 15;
+    const SORT_OPTIONS = [
+        { path: "companyName", descending: false },
+        { path: "companyName", descending: true },
+        { path: "contactPerson", descending: false },
+        { path: "contactPerson", descending: true },
+        { path: "submittedAt", descending: false },
+        { path: "submittedAt", descending: true }
+    ];
+    const DEFAULT_SORT_INDEX = 5;
     const STATUS = {
         SUBMITTED: "SUBMITTED",
         APPROVED: "APPROVED",
@@ -58,7 +69,8 @@ sap.ui.define([
                 Hardware: "approvals.categoryHardware",
                 Software: "approvals.categorySoftware",
                 Services: "approvals.categoryServices",
-                Consulting: "approvals.categoryConsulting"
+                Consulting: "approvals.categoryConsulting",
+                Other: "approvals.categoryOther"
             };
             return mCategoryKeys[sCategory] ? this._oBundle.getText(mCategoryKeys[sCategory]) : sCategory;
         },
@@ -95,6 +107,10 @@ sap.ui.define([
             this._updateFilterActiveState();
         },
 
+        onLogout: function () {
+            window.location.href = "/do/logout";
+        },
+
         onSettingsPress: async function () {
             if (!this._oSettingsDialog) {
                 this._oSettingsDialog = await Fragment.load({
@@ -107,10 +123,15 @@ sap.ui.define([
             this._oSettingsDialog.open();
         },
 
+        onSortSelect: function (oEvent) {
+            this._iSortIndex = oEvent.getParameter("selectedIndex");
+        },
+
         onSettingsConfirm: function (oEvent) {
-            const oSortItem = oEvent.getParameter("sortItem");
-            this._sSortPath = oSortItem ? oSortItem.getKey() : null;
-            this._bSortDescending = oEvent.getParameter("sortDescending") || false;
+            const iSort = this._iSortIndex === undefined ? DEFAULT_SORT_INDEX : this._iSortIndex;
+            const oSort = SORT_OPTIONS[iSort] || SORT_OPTIONS[DEFAULT_SORT_INDEX];
+            this._sSortPath = iSort === DEFAULT_SORT_INDEX ? null : oSort.path;
+            this._bSortDescending = oSort.descending;
 
             const oFilterKeys = oEvent.getParameter("filterKeys") || {};
             this._aCategoryFilter = oFilterKeys.category || [];
@@ -121,6 +142,11 @@ sap.ui.define([
 
         onSettingsReset: function () {
             this._aCategoryFilter = [];
+            this._iSortIndex = DEFAULT_SORT_INDEX;
+            const oSortOptions = this.byId("sortOptions");
+            if (oSortOptions) {
+                oSortOptions.setSelectedIndex(DEFAULT_SORT_INDEX);
+            }
 
             this._applyFiltersAndSort();
             this._updateFilterActiveState();
@@ -147,6 +173,7 @@ sap.ui.define([
             this._sSearchQuery = "";
             this._sSortPath = null;
             this._bSortDescending = false;
+            this._iSortIndex = DEFAULT_SORT_INDEX;
             this._aCategoryFilter = [];
 
             this.byId("statusTabBar").setSelectedKey("all");
@@ -199,7 +226,10 @@ sap.ui.define([
         },
 
         _updateFilterActiveState: function () {
+            const oColumns = this.getView().getModel("ui").getProperty("/columns") || {};
+            const bColumnsChanged = Object.keys(DEFAULT_COLUMNS).some((sKey) => !!oColumns[sKey] !== DEFAULT_COLUMNS[sKey]);
             const bActive =
+                bColumnsChanged ||
                 this._sTabKey !== "all" ||
                 !!this._sSearchQuery ||
                 !!this._sSortPath ||
@@ -239,22 +269,20 @@ sap.ui.define([
                 path: oContext.getPath(),
                 parameters: {
                     $select: "ID,companyName,contactPerson,email,phone,country,category,taxNumber," +
-                        "website,address,notes,status,submittedAt,rejectionComment,revisionFields,certificateMimeType"
+                        "website,address,notes,status,submittedAt,rejectionComment,approvalComment,revisionFields,certificateMimeType"
                 }
             });
             const oData = await oDialog.getElementBinding().requestObject();
 
             oDialog.setModel(new JSONModel({
                 ...oData,
-                showAiMessage: false,
-                aiBusy: false,
-                aiMessage: "",
-                aiMessageType: "Information"
+                aiBusy: false
             }), "details");
 
             oDialog.setModel(new JSONModel({
                 active: false,
                 comment: "",
+                commentHintState: "Error",
                 confirmEnabled: false,
                 fields: {
                     phone: false,
@@ -350,12 +378,20 @@ sap.ui.define([
 
         onRejectPress: function () {
             this._oSupplierDetailsDialog.getModel("reject").setProperty("/active", true);
+            setTimeout(() => {
+                const oPanel = this.byId("sdRejectSection");
+                const oDomRef = oPanel && oPanel.getDomRef();
+                if (oDomRef) {
+                    oDomRef.scrollIntoView({ behavior: "smooth", block: "end" });
+                }
+            }, 150);
         },
 
         onCancelReject: function () {
             const oRejectModel = this._oSupplierDetailsDialog.getModel("reject");
             oRejectModel.setProperty("/active", false);
             oRejectModel.setProperty("/comment", "");
+            oRejectModel.setProperty("/commentHintState", "Error");
             oRejectModel.setProperty("/confirmEnabled", false);
             oRejectModel.setProperty("/fields", {
                 phone: false,
@@ -369,7 +405,9 @@ sap.ui.define([
             });
         },
 
-        onRejectCommentChange: function () {
+        onRejectCommentChange: function (oEvent) {
+            const oRejectModel = this._oSupplierDetailsDialog.getModel("reject");
+            oRejectModel.setProperty("/comment", oEvent.getParameter("value"));
             this._updateConfirmEnabled();
         },
 
@@ -379,11 +417,13 @@ sap.ui.define([
 
         _updateConfirmEnabled: function () {
             const oRejectModel = this._oSupplierDetailsDialog.getModel("reject");
-            const sComment = (oRejectModel.getProperty("/comment") || "").trim();
+            const iLength = (oRejectModel.getProperty("/comment") || "").trim().length;
+            const bCommentValid = iLength >= MIN_REJECTION_COMMENT_LENGTH;
             const oFields = oRejectModel.getProperty("/fields") || {};
             const bAnyFieldSelected = Object.keys(oFields).some((sKey) => oFields[sKey]);
 
-            oRejectModel.setProperty("/confirmEnabled", !!sComment && bAnyFieldSelected);
+            oRejectModel.setProperty("/commentHintState", bCommentValid ? "Success" : "Error");
+            oRejectModel.setProperty("/confirmEnabled", bCommentValid && bAnyFieldSelected);
         },
 
         onApprovePress: function () {
@@ -422,15 +462,19 @@ sap.ui.define([
         onAnalyzeAI: async function () {
             const oDetailsModel = this._oSupplierDetailsDialog.getModel("details");
             oDetailsModel.setProperty("/aiBusy", true);
-            oDetailsModel.setProperty("/showAiMessage", false);
 
             try {
                 const { response, data } = await this._postSupplierAction(
                     "analyzeApplication",
-                    { ID: oDetailsModel.getProperty("/ID") }
+                    {
+                        ID: oDetailsModel.getProperty("/ID"),
+                        language: sap.ui.getCore().getConfiguration().getLanguage()
+                    }
                 );
                 if (!response.ok) {
-                    throw new Error(data.error?.message || this._oBundle.getText("approvals.toast.aiFailed"));
+                    throw new Error(data.error?.message
+                        ? errorMapper.map(data.error.message, this._oBundle)
+                        : this._oBundle.getText("approvals.toast.aiFailed"));
                 }
 
                 const sDecisionText = this._oBundle.getText(
@@ -444,20 +488,10 @@ sap.ui.define([
                         ? `${this._oBundle.getText("approvals.details.aiRejectionPrefix")} ${data.reasoning}`
                         : null
                 );
-                oDetailsModel.setProperty("/aiMessageType", data.decision === STATUS.APPROVED ? "Success" : "Error");
-                oDetailsModel.setProperty(
-                    "/aiMessage",
-                    this._oBundle.getText("approvals.details.aiResult", [sDecisionText, data.reasoning])
-                );
-                oDetailsModel.setProperty("/showAiMessage", true);
+                MessageToast.show(this._oBundle.getText("approvals.toast.aiComplete", [sDecisionText]));
                 this.byId("suppliersTable").getBinding("items").refresh();
             } catch (err) {
-                oDetailsModel.setProperty("/aiMessageType", "Error");
-                oDetailsModel.setProperty(
-                    "/aiMessage",
-                    this._oBundle.getText("approvals.details.aiError", [err.message])
-                );
-                oDetailsModel.setProperty("/showAiMessage", true);
+                MessageToast.show(this._oBundle.getText("approvals.details.aiError", [err.message]));
             } finally {
                 oDetailsModel.setProperty("/aiBusy", false);
             }
@@ -468,8 +502,8 @@ sap.ui.define([
             const oRejectModel = this._oSupplierDetailsDialog.getModel("reject");
             const sComment = (oRejectModel.getProperty("/comment") || "").trim();
 
-            if (!sComment) {
-                MessageToast.show(this._oBundle.getText("approvals.toast.commentRequired"));
+            if (sComment.length < MIN_REJECTION_COMMENT_LENGTH) {
+                MessageToast.show(this._oBundle.getText("approvals.toast.commentTooShort", [MIN_REJECTION_COMMENT_LENGTH]));
                 return;
             }
 
@@ -494,7 +528,7 @@ sap.ui.define([
                 });
 
                 if (!response.ok) {
-                    MessageToast.show(data.error ? data.error.message : this._oBundle.getText("approvals.toast.decisionFailedGeneric"));
+                    MessageToast.show(data.error ? errorMapper.map(data.error.message, this._oBundle) : this._oBundle.getText("approvals.toast.decisionFailedGeneric"));
                     return;
                 }
 

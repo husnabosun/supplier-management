@@ -6,16 +6,7 @@
     "applicationVersion": {
       "version": "1.0.0"
     },
-    "title": "{{application.portalTitle}}",
-    "dataSources": {
-      "mainService": {
-        "uri": "/odata/v4/supplier/",
-        "type": "OData",
-        "settings": {
-          "odataVersion": "4.0"
-        }
-      }
-    }
+    "title": "{{application.portalTitle}}"
   },
   "sap.ui": {
     "technology": "UI5",
@@ -42,16 +33,6 @@
       }
     },
     "models": {
-      "": {
-        "dataSource": "mainService",
-        "preload": true,
-        "settings": {
-          "operationMode": "Server",
-          "synchronizationMode": "None",
-          "autoExpandSelect": true,
-          "earlyRequests": true
-        }
-      },
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {

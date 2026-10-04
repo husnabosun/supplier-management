@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const {
-    NAMESPACE, STATUS, PDF_MIME_TYPE, ALLOWED_REVISION_FIELDS,
+    NAMESPACE, STATUS, PDF_MIME_TYPE, MIN_REJECTION_COMMENT_LENGTH, ALLOWED_REVISION_FIELDS,
     GEMINI_SERVICE_NAME, GEMINI_GENERATE_PATH, GEMINI_TIMEOUT_MS
 } = require('./constants');
 
@@ -17,8 +17,22 @@ async function readCertificateBuffer(certificate) {
     return Buffer.concat(certificateChunks);
 }
 
-function buildGeminiRequest(certificateMimeType, certificateBase64) {
-    const prompt = `You are reviewing a supplier certification document for a supplier onboarding process. The current date is ${new Date().toISOString().slice(0, 10)}. Read the attached PDF and decide whether this supplier should be APPROVED or REJECTED. Approve if the document reasonably presents itself as a legitimate certificate or qualification record, containing identifiable information such as a company name, a certificate or reference number, an issuing body, and a date (even if the document is plain text rather than a designed/scanned certificate, and even if it lacks logos, stamps, or signatures; many legitimate digital certificates are plain documents). Additionally, check the certificate's validity or expiry date if one is stated: if the certificate has clearly EXPIRED (the stated valid-until date is before the current date), REJECT it specifically for being expired and mention the expiry date in your reasoning. Only REJECT for other reasons if the document is clearly NOT a certificate at all (e.g., blank, irrelevant content, gibberish, or missing basic identifying information like company name or any certifying body). Do not reject for minor inaccuracies, informal language, or lack of visual formatting alone. Respond ONLY with strict JSON, no markdown, no code fences: {"decision": "APPROVED" or "REJECTED", "reasoning": "short explanation in English, mentioning the expiry date explicitly if that was the reason for rejection"}.`;
+function resolveAnalysisLanguage(req) {
+    const sRequested = req.data.language || req.headers?.['accept-language'] || '';
+    return /^tr/i.test(sRequested.trim()) ? 'Turkish' : 'English';
+}
+
+function buildGeminiRequest(certificateMimeType, certificateBase64, language) {
+    const prompt = `You are reviewing a supplier certification document for a supplier onboarding process. 
+    The current date is ${new Date().toISOString().slice(0, 10)}. Read the attached PDF and decide whether this supplier should be APPROVED or REJECTED. 
+    Approve if the document reasonably presents itself as a legitimate certificate or qualification record, containing identifiable information such as a company name, 
+    a certificate or reference number,
+    an issuing body, and a date (even if the document is plain text rather than a designed/scanned certificate, and even if it lacks logos, stamps, or signatures;
+    many legitimate digital certificates are plain documents). Additionally, check the certificate's validity or expiry date if one is stated: if the certificate
+    has clearly EXPIRED (the stated valid-until date is before the current date), REJECT it specifically for being expired and mention the expiry date in your reasoning.
+    Only REJECT for other reasons if the document is clearly NOT a certificate at all (e.g., blank, irrelevant content, gibberish, or missing basic identifying information like company name or
+     any certifying body). Do not reject for minor inaccuracies, informal language, or lack of visual formatting alone. Respond ONLY with strict JSON, no markdown, no code fences:
+     {"decision": "APPROVED" or "REJECTED", "reasoning": "short explanation written in ${language}, mentioning the expiry date explicitly if that was the reason for rejection"}.`;
     return {
         contents: [{
             parts: [
@@ -86,6 +100,9 @@ async function decideApplication(req) {
     if (decision === STATUS.REJECTED && (!comment || !comment.trim())) {
         return req.error(400, 'A rejection comment is required when rejecting an application.');
     }
+    if (decision === STATUS.REJECTED && comment.trim().length < MIN_REJECTION_COMMENT_LENGTH) {
+        return req.error(400, `Rejection comment must be at least ${MIN_REJECTION_COMMENT_LENGTH} characters long.`);
+    }
 
     let sRevisionFields = null;
     if (decision === STATUS.REJECTED) {
@@ -119,24 +136,23 @@ async function analyzeApplication(req) {
     const { ID } = req.data;
 
     const application = await SELECT.one.from(Suppliers)
-        .columns('ID', 'certificate', 'certificateMimeType')
+        .columns('ID', 'status', 'certificate', 'certificateMimeType')
         .where({ ID });
     if (!application) {
         return req.error(404, 'Application not found.');
     }
+    if (application.status === STATUS.APPROVED || application.status === STATUS.REJECTED) {
+        return req.error(409, 'This application has already been decided and cannot be re-analyzed.');
+    }
     const certificateBuffer = await readCertificateBuffer(application.certificate);
 
-    console.log('[DEBUG analyzeApplication] typeof application.certificate:', typeof application.certificate);
-    console.log('[DEBUG analyzeApplication] certificateBuffer length:', certificateBuffer.length);
-    console.log('[DEBUG analyzeApplication] application.certificateMimeType:', JSON.stringify(application.certificateMimeType));
     const certificateMimeType = String(application.certificateMimeType || '').trim().toLowerCase();
     const invalidCertificate = certificateBuffer.length === 0 || certificateMimeType !== PDF_MIME_TYPE;
-    console.log('[DEBUG analyzeApplication] 400 condition result:', invalidCertificate);
     if (invalidCertificate) {
         return req.error(400, 'A valid PDF certificate is required for AI analysis.');
     }
 
-    const body = buildGeminiRequest(certificateMimeType, certificateBuffer.toString('base64'));
+    const body = buildGeminiRequest(certificateMimeType, certificateBuffer.toString('base64'), resolveAnalysisLanguage(req));
 
     let result;
     try {
@@ -157,7 +173,10 @@ async function analyzeApplication(req) {
         rejectionComment: analysis.decision === STATUS.REJECTED
             ? `[AI Analysis] ${analysis.reasoning}`
             : null,
-        revisionFields: null
+        approvalComment: analysis.decision === STATUS.APPROVED
+            ? `[AI Analysis] ${analysis.reasoning}`
+            : null,
+        revisionFields: analysis.decision === STATUS.REJECTED ? 'certificate' : null
     }).where({ ID });
 
     return {

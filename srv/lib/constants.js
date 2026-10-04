@@ -4,6 +4,10 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 const BCRYPT_SALT_ROUNDS = 10;
 const MAX_CERTIFICATE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes
 const PDF_MIME_TYPE = 'application/pdf';
+const MIN_REJECTION_COMMENT_LENGTH = 15;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[\d\s+-]+$/;
+const PDF_MAGIC = '%PDF-';
 
 const STATUS = Object.freeze({
     SUBMITTED: 'SUBMITTED',
@@ -25,6 +29,10 @@ module.exports = {
     BCRYPT_SALT_ROUNDS,
     MAX_CERTIFICATE_SIZE,
     PDF_MIME_TYPE,
+    MIN_REJECTION_COMMENT_LENGTH,
+    EMAIL_REGEX,
+    PHONE_REGEX,
+    PDF_MAGIC,
     STATUS,
     ALLOWED_REVISION_FIELDS,
     GEMINI_SERVICE_NAME,

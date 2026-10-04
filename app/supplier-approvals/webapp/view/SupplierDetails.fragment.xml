@@ -14,8 +14,8 @@
                 id="sdObjectHeader"
                 title="{details>/companyName}"
                 number="{path: 'details>/status', formatter: '.formatStatusText'}"
-                class="sapUiSmallMarginBottom" />
-            <HBox id="sdProcessFlowBox" alignItems="Center" justifyContent="Center" class="sapUiMediumMarginTop sapUiMediumMarginBottom">
+                class="sapUiTinyMarginBottom" />
+            <HBox id="sdProcessFlowBox" alignItems="Center" justifyContent="Center" class="sapUiTinyMarginTopBottom">
                 <suite:ProcessFlow
                     id="approvalProcessFlow"
                     xmlns:suite="sap.suite.ui.commons"
@@ -45,7 +45,7 @@
                 text="{i18n>approvals.details.viewCertificate}"
                 icon="sap-icon://pdf-attachment"
                 type="Transparent"
-                class="sapUiMediumMarginBegin sapUiMediumMarginBottom"
+                class="sapUiSmallMarginBegin"
                 press=".onViewCertificate" />
             <f:SimpleForm
                 id="sdSimpleForm"
@@ -56,8 +56,7 @@
                 labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12"
                 emptySpanXL="0" emptySpanL="0" emptySpanM="0" emptySpanS="0"
                 columnsXL="2" columnsL="2" columnsM="1"
-                singleContainerFullSize="false"
-                class="sapUiMediumMarginTop">
+                singleContainerFullSize="false">
                 <f:content>
                     <Label text="{i18n>approvals.colContactPerson}" />
                     <Text text="{details>/contactPerson}" />
@@ -95,22 +94,27 @@
                         state="{path: 'details>/status', formatter: '.formatter.statusState'}" />
 
                     <Label text="{i18n>approvals.details.rejectionComment}" visible="{= ${details>/status} === 'REJECTED' }" />
-                    <Text text="{rejectionComment}" visible="{= ${details>/status} === 'REJECTED' }" />
+                    <MessageStrip
+                        id="sdRejectionStrip"
+                        type="Error"
+                        showIcon="true"
+                        text="{details>/rejectionComment}"
+                        visible="{= ${details>/status} === 'REJECTED' &amp;&amp; !!${details>/rejectionComment} }" />
+
+                    <Label text="{i18n>approvals.details.approvalComment}" visible="{= ${details>/status} === 'APPROVED' &amp;&amp; !!${details>/approvalComment} }" />
+                    <MessageStrip
+                        id="sdApprovalStrip"
+                        type="Success"
+                        showIcon="true"
+                        text="{details>/approvalComment}"
+                        visible="{= ${details>/status} === 'APPROVED' &amp;&amp; !!${details>/approvalComment} }" />
                 </f:content>
             </f:SimpleForm>
-
-            <MessageStrip
-                id="sdAiMessageStrip"
-                type="{details>/aiMessageType}"
-                showIcon="true"
-                class="sapUiMediumMarginTop"
-                text="{details>/aiMessage}"
-                visible="{details>/showAiMessage}" />
 
             <Panel
                 id="sdRejectSection"
                 headerText="{i18n>approvals.details.rejectPanelTitle}"
-                class="sapUiMediumMarginTop"
+                class="sapUiSmallMarginTop"
                 visible="{reject>/active}">
                 <VBox id="sdRejectCommentBox" class="sapUiSmallMargin">
                     <Label
@@ -124,18 +128,20 @@
                         rows="3"
                         placeholder="{i18n>approvals.details.commentPlaceholder}"
                         value="{reject>/comment}"
+                        valueLiveUpdate="true"
                         liveChange=".onRejectCommentChange" />
+                    <ObjectStatus id="sdRejectCommentHint" text="{i18n>approvals.details.commentHint}" state="{reject>/commentHintState}" class="sapUiTinyMarginTop" />
                 </VBox>
                 <VBox id="sdRevisionFieldsBox" class="sapUiSmallMargin">
                     <Label id="sdRevisionListLabel" text="{i18n>approvals.details.revisionListHeader}" class="sapUiSmallMarginBottom" />
-                    <CheckBox id="sdChkPhone" text="{i18n>approvals.details.revisionPhone}" selected="{reject>/fields/phone}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkCountry" text="{i18n>approvals.details.revisionCountry}" selected="{reject>/fields/country}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkCategory" text="{i18n>approvals.details.revisionCategory}" selected="{reject>/fields/category}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkTaxNumber" text="{i18n>approvals.details.revisionTaxNumber}" selected="{reject>/fields/taxNumber}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkWebsite" text="{i18n>approvals.details.revisionWebsite}" selected="{reject>/fields/website}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkAddress" text="{i18n>approvals.details.revisionAddress}" selected="{reject>/fields/address}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkNotes" text="{i18n>approvals.details.revisionNotes}" selected="{reject>/fields/notes}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
-                    <CheckBox id="sdChkCertificate" text="{i18n>approvals.details.revisionCertificate}" selected="{reject>/fields/certificate}" select=".onRevisionFieldToggle" class="sapUiTinyMarginBottom" />
+                    <CheckBox id="sdChkPhone" text="{i18n>approvals.details.revisionPhone}" selected="{reject>/fields/phone}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkCountry" text="{i18n>approvals.details.revisionCountry}" selected="{reject>/fields/country}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkCategory" text="{i18n>approvals.details.revisionCategory}" selected="{reject>/fields/category}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkTaxNumber" text="{i18n>approvals.details.revisionTaxNumber}" selected="{reject>/fields/taxNumber}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkWebsite" text="{i18n>approvals.details.revisionWebsite}" selected="{reject>/fields/website}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkAddress" text="{i18n>approvals.details.revisionAddress}" selected="{reject>/fields/address}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkNotes" text="{i18n>approvals.details.revisionNotes}" selected="{reject>/fields/notes}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
+                    <CheckBox id="sdChkCertificate" text="{i18n>approvals.details.revisionCertificate}" selected="{reject>/fields/certificate}" select=".onRevisionFieldToggle" class="sapUiSmallMarginTop" />
                 </VBox>
             </Panel>
         </content>

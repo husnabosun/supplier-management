@@ -1,6 +1,8 @@
 {
   "welcomeFile": "/index.html",
   "authenticationMethod": "route",
+  "logout": { "logoutEndpoint": "/do/logout", "logoutPage": "/index.html#Shell-home" },
+  "errorPage": [{ "status": [403], "file": "./error/403.html" }],
   "routes": [
     {
       "source": "^/user-api(.*)$",
@@ -39,6 +41,12 @@
       "target": "/appconfig/$1",
       "localDir": "../app",
       "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/assets/(.*)$",
+      "target": "/assets/$1",
+      "localDir": "../app",
+      "authenticationType": "none"
     },
     {
       "source": "^/supplier-portal/(.*)$",

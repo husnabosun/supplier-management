@@ -5,12 +5,23 @@
         id="viewSettingsDialog"
         confirm=".onSettingsConfirm"
         resetFilters=".onSettingsReset">
-        <sortItems>
-            <ViewSettingsItem key="companyName" text="{i18n>approvals.colCompanyName}" />
-            <ViewSettingsItem key="contactPerson" text="{i18n>approvals.colContactPerson}" />
-            <ViewSettingsItem key="submittedAt" text="{i18n>approvals.colSubmissionDate}" />
-            <ViewSettingsItem key="status" text="{i18n>approvals.colStatus}" />
-        </sortItems>
+        <customTabs>
+            <ViewSettingsCustomTab id="sortCustomTab" icon="sap-icon://sort" title="{i18n>approvals.sortTabTitle}">
+                <content>
+                    <VBox class="sapUiSmallMargin">
+                        <Text text="{i18n>approvals.sortIntro}" class="sapUiTinyMarginBottom" />
+                        <RadioButtonGroup id="sortOptions" columns="1" selectedIndex="5" select=".onSortSelect">
+                            <RadioButton text="{i18n>approvals.sortCompanyAsc}" />
+                            <RadioButton text="{i18n>approvals.sortCompanyDesc}" />
+                            <RadioButton text="{i18n>approvals.sortContactAsc}" />
+                            <RadioButton text="{i18n>approvals.sortContactDesc}" />
+                            <RadioButton text="{i18n>approvals.sortDateAsc}" />
+                            <RadioButton text="{i18n>approvals.sortDateDesc}" />
+                        </RadioButtonGroup>
+                    </VBox>
+                </content>
+            </ViewSettingsCustomTab>
+        </customTabs>
         <filterItems>
             <ViewSettingsFilterItem key="category" text="{i18n>approvals.colCategory}" multiSelect="true">
                 <items>
@@ -18,6 +29,7 @@
                     <ViewSettingsItem key="Software" text="{i18n>approvals.categorySoftware}" />
                     <ViewSettingsItem key="Services" text="{i18n>approvals.categoryServices}" />
                     <ViewSettingsItem key="Consulting" text="{i18n>approvals.categoryConsulting}" />
+                    <ViewSettingsItem key="Other" text="{i18n>approvals.categoryOther}" />
                 </items>
             </ViewSettingsFilterItem>
         </filterItems>

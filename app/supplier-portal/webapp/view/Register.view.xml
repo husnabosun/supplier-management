@@ -2,8 +2,20 @@
     controllerName="supplier.portal.controller.Register"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="{i18n>register.pageTitle}" showHeader="true">
-        <content>
+    <Page showHeader="true">
+        <customHeader>
+            <Bar>
+                <contentRight>
+                    <HBox alignItems="Center" class="sapUiTinyMarginTopBottom sapUiSmallMarginEnd">
+                        <Image src="../../assets/abicsLogo.png" height="1.75rem" />
+                    </HBox>
+                </contentRight>
+                <contentLeft>
+                    <Title text="{i18n>register.pageTitle}" class="sapUiSmallMarginBegin" />
+                </contentLeft>
+            </Bar>
+        </customHeader>
+                <content>
             <VBox class="sapUiResponsiveMargin" alignItems="Center">
                 <Panel width="26rem" headerText="{i18n>register.formTitle}" class="sapUiResponsiveMargin">
                     <content>
@@ -12,19 +24,14 @@
                     <Input id="registerEmail" type="Email" placeholder="{i18n>common.emailPlaceholder}" />
 
                     <Label text="{i18n>common.password}" labelFor="registerPassword" class="sapUiTinyMarginTop" />
-                    <HBox alignItems="Center">
-                        <Input
-                            id="registerPassword"
-                            type="Password"
-                            width="100%"
-                            liveChange=".onPasswordLiveChange" />
-                        <Button
-                            id="togglePasswordBtn"
-                            icon="sap-icon://show"
-                            type="Transparent"
-                            tooltip="{i18n>register.showHidePasswordTooltip}"
-                            press=".onTogglePasswordVisibility" />
-                    </HBox>
+                    <Input
+                        id="registerPassword"
+                        type="Password"
+                        width="100%"
+                        showValueHelp="true"
+                        valueHelpIconSrc="sap-icon://show"
+                        valueHelpRequest=".onTogglePasswordVisibility"
+                        liveChange=".onPasswordLiveChange" />
 
                     <VBox class="sapUiTinyMarginTop" visible="{rules>/visible}">
                         <ObjectStatus

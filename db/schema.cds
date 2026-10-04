@@ -15,12 +15,14 @@ entity Suppliers : cuid, managed {
     notes            : String(2000);
     certificate      : LargeBinary @Core.MediaType: certificateMimeType;
     certificateMimeType : String;
-    status           : String(20) default 'Submitted';
+    status           : String(20) default 'SUBMITTED';
     submittedAt      : Timestamp;
     submittedBy      : String(255);
     rejectionComment : String(1000);
+     approvalComment  : String(1000);
     revisionFields   : String(500); // comma-separated field names the approver flagged for revision
 }
+@assert.unique: { email: [email] }
 entity Users : cuid {
     email        : String(255) not null;
     passwordHash : String(255) not null;

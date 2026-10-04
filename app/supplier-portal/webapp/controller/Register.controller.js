@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
-    "sap/ui/model/json/JSONModel"
-], function (Controller, JSONModel) {
+    "sap/ui/model/json/JSONModel",
+    "../model/errorMapper"
+], function (Controller, JSONModel, errorMapper) {
     "use strict";
 
     return Controller.extend("supplier.portal.controller.Register", {
@@ -32,11 +33,15 @@ sap.ui.define([
 
         onTogglePasswordVisibility: function () {
             const oInput = this.byId("registerPassword");
-            const oButton = this.byId("togglePasswordBtn");
             const bIsPassword = oInput.getType() === "Password";
 
             oInput.setType(bIsPassword ? "Text" : "Password");
-            oButton.setIcon(bIsPassword ? "sap-icon://hide" : "sap-icon://show");
+            const sIcon = bIsPassword ? "sap-icon://hide" : "sap-icon://show";
+            oInput.setValueHelpIconSrc(sIcon);
+            const oIcon = oInput._getValueHelpIcon && oInput._getValueHelpIcon();
+            if (oIcon) {
+                oIcon.setSrc(sIcon);
+            }
         },
 
         onRegisterPress: async function () {
@@ -57,7 +62,7 @@ sap.ui.define([
                 const data = await response.json();
 
                 if (!response.ok) {
-                    oErrorStrip.setText(data.error ? data.error.message : oBundle.getText("register.failedGeneric"));
+                    oErrorStrip.setText(data.error ? errorMapper.map(data.error.message, oBundle) : oBundle.getText("register.failedGeneric"));
                     oErrorStrip.setVisible(true);
                     return;
                 }

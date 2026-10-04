@@ -96,6 +96,6 @@ service SupplierService {
     ) returns SubmitResult;
 
     @requires: 'Approval'
-    action analyzeApplication(ID : UUID) returns AIAnalysisResult;
+    action analyzeApplication(ID : UUID, language : String) returns AIAnalysisResult;
 }
 

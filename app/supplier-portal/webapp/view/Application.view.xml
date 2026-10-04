@@ -4,9 +4,22 @@
     xmlns:f="sap.ui.layout.form"
     xmlns:u="sap.ui.unified"
     xmlns:suite="sap.suite.ui.commons"
+    xmlns:core="sap.ui.core"
     xmlns="sap.m">
-    <Page title="{i18n>application.pageTitle}" showHeader="true">
-        <content>
+    <Page showHeader="true">
+        <customHeader>
+            <Bar>
+                <contentRight>
+                    <HBox alignItems="Center" class="sapUiTinyMarginTopBottom sapUiSmallMarginEnd">
+                        <Image src="../../assets/abicsLogo.png" height="1.75rem" />
+                    </HBox>
+                </contentRight>
+                <contentLeft>
+                    <Title text="{i18n>application.pageTitle}" class="sapUiSmallMarginBegin" />
+                </contentLeft>
+            </Bar>
+        </customHeader>
+                <content>
 
             <!-- ================= FORM (visible when the user can submit or reapply )================= -->
             <VBox id="formSection" class="sapUiResponsiveMargin" visible="{app>/showForm}">
@@ -39,7 +52,28 @@
                         <Input id="contactPersonInput" required="true" editable="{= !${app>/isReapplyMode} }" />
 
                         <Label text="{i18n>application.phoneLabel}" />
-                        <Input id="phoneInput" type="Tel" editable="{app>/editableFields/phone}" />
+                        <HBox>
+                            <Select
+                                id="phoneCountryCode"
+                                width="7rem"
+                                selectedKey="+90"
+                                tooltip="{i18n>application.phoneCountryCodeLabel}"
+                                enabled="{app>/editableFields/phone}">
+                                <core:Item key="+90" text="{i18n>application.phoneCountryTR}" />
+                                <core:Item key="+1" text="{i18n>application.phoneCountryUS}" />
+                                <core:Item key="+44" text="{i18n>application.phoneCountryGB}" />
+                                <core:Item key="+49" text="{i18n>application.phoneCountryDE}" />
+                            </Select>
+                            <Input
+                                id="phoneNumberInput"
+                                type="Tel"
+                                width="100%"
+                                class="sapUiTinyMarginBegin"
+                                placeholder="{i18n>application.phoneNumberLabel}"
+                                valueStateText="{i18n>application.phoneNumberDigitsOnly}"
+                                liveChange=".onPhoneNumberLiveChange"
+                                editable="{app>/editableFields/phone}" />
+                        </HBox>
 
                         <Label text="{i18n>application.countryLabel}" />
                         <Input id="countryInput" editable="{app>/editableFields/country}" />
@@ -51,6 +85,7 @@
                             <core:Item xmlns:core="sap.ui.core" key="Software" text="{i18n>application.categorySoftware}" />
                             <core:Item xmlns:core="sap.ui.core" key="Services" text="{i18n>application.categoryServices}" />
                             <core:Item xmlns:core="sap.ui.core" key="Consulting" text="{i18n>application.categoryConsulting}" />
+                            <core:Item xmlns:core="sap.ui.core" key="Other" text="{i18n>application.categoryOther}" />
                         </Select>
 
                         <Label text="{i18n>application.taxNumberLabel}" />
@@ -73,7 +108,7 @@
                                 required="true"
                                 fileType="pdf"
                                 mimeType="application/pdf"
-                                maximumFileSize="10240"
+                                maximumFileSize="10"
                                 change=".onCertificateChange"
                                 typeMissmatch=".onFileTypeMismatch"
                                 fileSizeExceed=".onFileSizeExceed"

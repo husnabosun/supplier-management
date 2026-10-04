@@ -3,8 +3,9 @@ sap.ui.define(
     "sap/ui/core/mvc/Controller",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
+    "../model/errorMapper",
   ],
-  function (Controller, JSONModel, MessageToast) {
+  function (Controller, JSONModel, MessageToast, errorMapper) {
     "use strict";
 
     const PDF_MIME_TYPE = "application/pdf";
@@ -44,7 +45,43 @@ sap.ui.define(
         this._sCertificateFileName = null;
         this._sCertificateMimeType = null;
 
+        // The view instance is reused by the router, so state must be refreshed on every navigation.
+        this.getOwnerComponent().getRouter().getRoute("application").attachPatternMatched(this._onRouteMatched, this);
+      },
+
+      _onRouteMatched: function () {
+        this._resetState();
         this._checkUserAndStatus();
+      },
+
+      _resetState: function () {
+        const oAppModel = this.getView().getModel("app");
+        oAppModel.setProperty("/showForm", false);
+        oAppModel.setProperty("/showStatus", false);
+        oAppModel.setProperty("/isReapplyMode", false);
+        oAppModel.setProperty("/showRejectionComment", false);
+        oAppModel.setProperty("/showReapply", false);
+        oAppModel.setProperty("/showReapplyInfo", false);
+        oAppModel.setProperty("/companyName", "");
+        oAppModel.setProperty("/editableFields", {
+          phone: true, country: true, category: true, taxNumber: true, website: true, address: true, notes: true,
+        });
+        this.getView().getModel("pf").setData({ nodes: [], lanes: [] });
+
+        ["companyNameInput", "contactPersonInput", "phoneNumberInput", "countryInput", "taxNumberInput", "websiteInput", "addressInput", "notesInput"]
+          .forEach((sId) => {
+            const oControl = this.byId(sId);
+            if (oControl) {
+              oControl.setValue("");
+              oControl.setValueState("None");
+            }
+          });
+        this.byId("categorySelect").setSelectedIndex(0);
+        this.byId("phoneCountryCode").setSelectedKey("+90");
+        this.byId("certificateUploader").clear();
+        this._sCertificateBase64 = null;
+        this._sCertificateFileName = null;
+        this._sCertificateMimeType = null;
       },
 
       _checkUserAndStatus: async function () {
@@ -223,7 +260,7 @@ sap.ui.define(
       _populateReapplyForm: function (data) {
         this.byId("companyNameInput").setValue(data.companyName || "");
         this.byId("contactPersonInput").setValue(data.contactPerson || "");
-        this.byId("phoneInput").setValue(data.phone || "");
+        this._populatePhone(data.phone);
         this.byId("countryInput").setValue(data.country || "");
         this.byId("categorySelect").setSelectedKey(data.category || "");
         this.byId("taxNumberInput").setValue(data.taxNumber || "");
@@ -235,6 +272,39 @@ sap.ui.define(
         this._sCertificateFileName = null;
         this._sCertificateMimeType = null;
         this.byId("certificateUploader").clear();
+      },
+
+      _populatePhone: function (sPhone) {
+        const sValue = (sPhone || "").trim();
+        const oSelect = this.byId("phoneCountryCode");
+        const sMatchedKey = oSelect
+          .getItems()
+          .map((oItem) => oItem.getKey())
+          .find((sKey) => sValue.startsWith(sKey + " ") || sValue.startsWith(sKey));
+        oSelect.setSelectedKey(sMatchedKey || "+90");
+        this.byId("phoneNumberInput").setValue(
+          (sMatchedKey ? sValue.slice(sMatchedKey.length) : sValue).trim(),
+        );
+        this.byId("phoneNumberInput").setValueState("None");
+      },
+
+      onPhoneNumberLiveChange: function (oEvent) {
+        const oInput = oEvent.getSource();
+        const sValue = oEvent.getParameter("value") || "";
+        const sDigits = sValue.replace(/\D/g, "");
+        if (sDigits !== sValue) {
+          oInput.setValue(sDigits);
+          oInput.setValueState("Error");
+        } else {
+          oInput.setValueState("None");
+        }
+      },
+
+      _buildPhone: function () {
+        const sNumber = this.byId("phoneNumberInput").getValue().trim();
+        return sNumber
+          ? this.byId("phoneCountryCode").getSelectedKey() + " " + sNumber
+          : "";
       },
 
       _getRevisionFields: function (sRevisionFields) {
@@ -258,13 +328,13 @@ sap.ui.define(
         const sRevisionLabels = aRevisionFields
           .map((sField) => mRevisionLabelKeys[sField])
           .filter(Boolean)
-          .map((sKey) => this._oBundle.getText(sKey))
+          .map((sKey) => this._oBundle.getText(sKey).replace(/\s*\*$/, ""))
           .join(", ");
         oAppModel.setProperty(
           "/reapplyInfo",
           this._oBundle.getText("application.reapplyInfo", [
             data.rejectionComment || this._oBundle.getText("application.reapplyReasonUnavailable"),
-            sRevisionLabels || this._oBundle.getText("application.reapplyFieldsUnavailable"),
+            sRevisionLabels || this._oBundle.getText("application.reapplyFieldsFallback"),
           ]),
         );
         oAppModel.setProperty("/showReapplyInfo", true);
@@ -310,7 +380,7 @@ sap.ui.define(
           email: this._sEmail,
           companyName: sCompanyName,
           contactPerson: sContactPerson,
-          phone: this.byId("phoneInput").getValue(),
+          phone: this._buildPhone(),
           country: this.byId("countryInput").getValue(),
           category: this.byId("categorySelect").getSelectedKey(),
           taxNumber: this.byId("taxNumberInput").getValue(),
@@ -337,7 +407,7 @@ sap.ui.define(
 
           if (!response.ok) {
             oErrorStrip.setText(
-              data.error ? data.error.message : this._oBundle.getText("application.submissionFailedGeneric"),
+              data.error ? errorMapper.map(data.error.message, this._oBundle) : this._oBundle.getText("application.submissionFailedGeneric"),
             );
             oErrorStrip.setVisible(true);
             return;

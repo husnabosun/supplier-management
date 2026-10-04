@@ -1,13 +1,22 @@
 const cds = require('@sap/cds');
 const bcrypt = require('bcryptjs');
-const { NAMESPACE, PASSWORD_REGEX, BCRYPT_SALT_ROUNDS } = require('./constants');
+const { NAMESPACE, PASSWORD_REGEX, BCRYPT_SALT_ROUNDS, EMAIL_REGEX } = require('./constants');
+
+function normalizeEmail(email) {
+    return typeof email === 'string' ? email.trim().toLowerCase() : email;
+}
 
 async function register(req) {
     const { Users } = cds.entities(NAMESPACE);
-    const { email, password } = req.data;
+    const email = normalizeEmail(req.data.email);
+    const { password } = req.data;
 
     if (!email || !password) {
         return req.error(400, 'Email and password are required.');
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+        return req.error(400, 'Please provide a valid email address.');
     }
 
     if (!PASSWORD_REGEX.test(password)) {
@@ -30,13 +39,16 @@ async function register(req) {
 
 async function login(req) {
     const { Users } = cds.entities(NAMESPACE);
-    const { email, password } = req.data;
+    const email = normalizeEmail(req.data.email);
+    const { password } = req.data;
 
     if (!email || !password) {
         return req.error(400, 'Email and password are required.');
     }
 
-    const user = await SELECT.one.from(Users).where({ email });
+    // Fall back to the raw value so accounts created before normalization can still log in.
+    const user = await SELECT.one.from(Users).where({ email })
+        || await SELECT.one.from(Users).where({ email: req.data.email });
     // Keep the same error response for unknown users and incorrect passwords.
     if (!user) {
         return req.error(400, 'Invalid email or password.');
@@ -47,7 +59,7 @@ async function login(req) {
         return req.error(400, 'Invalid email or password.');
     }
 
-    return { success: true, message: 'Login successful.', email };
+    return { success: true, message: 'Login successful.', email: user.email };
 }
 
-module.exports = { register, login };
+module.exports = { register, login, normalizeEmail };

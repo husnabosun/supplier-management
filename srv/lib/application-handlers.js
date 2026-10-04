@@ -1,9 +1,20 @@
 const cds = require('@sap/cds');
-const { NAMESPACE, MAX_CERTIFICATE_SIZE, PDF_MIME_TYPE, STATUS } = require('./constants');
+const { NAMESPACE, MAX_CERTIFICATE_SIZE, PDF_MIME_TYPE, PDF_MAGIC, PHONE_REGEX, STATUS } = require('./constants');
+const { normalizeEmail } = require('./auth-handlers');
 
 function getCertificateSizeInBytes(certificateContent) {
     return Buffer.from(certificateContent, 'base64').length;
 }
+
+function hasPdfSignature(certificateContent) {
+    return Buffer.from(certificateContent, 'base64').subarray(0, PDF_MAGIC.length).toString('latin1') === PDF_MAGIC;
+}
+
+function isValidPhone(phone) {
+    return !phone || PHONE_REGEX.test(phone);
+}
+
+const REVISABLE_FIELDS = ['phone', 'country', 'category', 'taxNumber', 'website', 'address', 'notes'];
 
 function buildSubmissionRecord(data) {
     return {
@@ -39,13 +50,14 @@ function buildReapplicationUpdate(data) {
         status: STATUS.SUBMITTED,
         submittedAt: new Date().toISOString(),
         rejectionComment: null,
+        approvalComment: null,
         revisionFields: null
     };
 }
 
 async function myApplicationStatus(req) {
     const { Suppliers } = cds.entities(NAMESPACE);
-    const { email } = req.data;
+    const email = normalizeEmail(req.data.email);
 
     if (!email) {
         return req.error(400, 'Email is required.');
@@ -54,7 +66,8 @@ async function myApplicationStatus(req) {
     const application = await SELECT.one.from(Suppliers)
         .columns(
             'companyName', 'contactPerson', 'phone', 'country', 'category',
-            'taxNumber', 'website', 'address', 'notes', 'rejectionComment', 'revisionFields'
+            'taxNumber', 'website', 'address', 'notes', 'status', 'submittedAt',
+            'rejectionComment', 'revisionFields'
         )
         .where({ submittedBy: email });
 
@@ -82,12 +95,13 @@ async function myApplicationStatus(req) {
 async function submitApplication(req) {
     const { Suppliers } = cds.entities(NAMESPACE);
     const {
-        email, companyName, contactPerson, phone, country, category,
+        companyName, contactPerson, phone, country, category,
         taxNumber, website, address, notes,
         certificateContent, certificateMimeType
     } = req.data;
+    const email = normalizeEmail(req.data.email);
 
-    // --- Zorunlu alan kontrolü (backend tarafı) ---
+    // --- required space control on backend ---
     if (!email) {
         return req.error(400, 'Missing user context.');
     }
@@ -100,22 +114,28 @@ async function submitApplication(req) {
     if (!certificateContent) {
         return req.error(400, 'Certificate file is required.');
     }
+    if (!isValidPhone(phone)) {
+        return req.error(400, 'Phone number may only contain digits, spaces, + and -.');
+    }
 
-    // --- Aynı kullanıcının ikinci kez başvuru yapmasını engelle ---
+    // --- Prevent the same user from submitting a second application ---
     const existing = await SELECT.one.from(Suppliers).where({ submittedBy: email });
     if (existing) {
         return req.error(409, 'You already have a submitted application.');
     }
 
-    // --- Dosya tipi kontrolü ---
+    // --- File type check ---
     if (certificateMimeType !== PDF_MIME_TYPE) {
         return req.error(400, 'Only PDF files are allowed for the certificate.');
     }
 
-    // --- Dosya boyutu kontrolü (base64 -> gerçek byte boyutu) ---
+    // --- File size check (base64 -> actual byte size) ---
     const sizeInBytes = getCertificateSizeInBytes(certificateContent);
     if (sizeInBytes > MAX_CERTIFICATE_SIZE) {
         return req.error(400, 'Certificate file must not exceed 10 MB.');
+    }
+    if (!hasPdfSignature(certificateContent)) {
+        return req.error(400, 'The uploaded file is not a valid PDF.');
     }
 
     await INSERT.into(Suppliers).entries(buildSubmissionRecord({
@@ -138,7 +158,7 @@ async function submitApplication(req) {
 
 async function myApplicationDetails(req) {
     const { Suppliers } = cds.entities(NAMESPACE);
-    const { email } = req.data;
+    const email = normalizeEmail(req.data.email);
 
     if (!email) {
         return req.error(400, 'Email is required.');
@@ -167,12 +187,13 @@ async function myApplicationDetails(req) {
 async function reapplyApplication(req) {
     const { Suppliers } = cds.entities(NAMESPACE);
     const {
-        email, companyName, contactPerson, phone, country, category,
+        companyName, contactPerson, phone, country, category,
         taxNumber, website, address, notes,
         certificateContent, certificateMimeType
     } = req.data;
+    const email = normalizeEmail(req.data.email);
 
-    // --- Zorunlu alan kontrolü (companyName/contactPerson her zaman gönderilir, salt-okunur olsa da) ---
+    // --- Required field check (companyName/contactPerson are always sent, even if read-only) ---
     if (!email) {
         return req.error(400, 'Missing user context.');
     }
@@ -183,7 +204,7 @@ async function reapplyApplication(req) {
         return req.error(400, 'Contact person is required.');
     }
 
-    // --- Yeniden başvuru sadece reddedilmiş kayıt üzerinde yapılabilir ---
+    // --- Re-application can only be made on a rejected record ---
     const existing = await SELECT.one.from(Suppliers).where({ submittedBy: email });
     if (!existing) {
         return req.error(404, 'No existing application found to re-apply.');
@@ -192,19 +213,20 @@ async function reapplyApplication(req) {
         return req.error(400, 'Only rejected applications can be re-applied.');
     }
 
-    const oUpdate = buildReapplicationUpdate({
-        companyName,
-        contactPerson,
-        phone,
-        country,
-        category,
-        taxNumber,
-        website,
-        address,
-        notes
-    });
+    // Only fields the approver flagged are revisable; everything else keeps its stored value.
+    const aRevisable = (existing.revisionFields || '').split(',').map(s => s.trim()).filter(Boolean);
+    const submitted = { phone, country, category, taxNumber, website, address, notes };
+    const oMerged = { companyName: existing.companyName, contactPerson: existing.contactPerson };
+    for (const sField of REVISABLE_FIELDS) {
+        oMerged[sField] = aRevisable.includes(sField) ? submitted[sField] : existing[sField];
+    }
+    if (!isValidPhone(oMerged.phone)) {
+        return req.error(400, 'Phone number may only contain digits, spaces, + and -.');
+    }
 
-    // --- Sertifika her zaman zorunlu: yeniden başvuruda yeni PDF yüklenmelidir ---
+    const oUpdate = buildReapplicationUpdate(oMerged);
+
+    // --- Certificate is always required: a new PDF must be uploaded for re-application ---
     if (!certificateContent) {
         return req.error(400, 'A new certificate must be uploaded to re-apply.');
     }
@@ -214,6 +236,9 @@ async function reapplyApplication(req) {
     const sizeInBytes = getCertificateSizeInBytes(certificateContent);
     if (sizeInBytes > MAX_CERTIFICATE_SIZE) {
         return req.error(400, 'Certificate file must not exceed 10 MB.');
+    }
+    if (!hasPdfSignature(certificateContent)) {
+        return req.error(400, 'The uploaded file is not a valid PDF.');
     }
     oUpdate.certificate = certificateContent;
     oUpdate.certificateMimeType = certificateMimeType;

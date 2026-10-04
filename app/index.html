@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="assets/abicsLogo.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Management</title>
     <script>
@@ -31,18 +32,33 @@
             }
 
             window["sap-ushell-config"] = config;
-            const bootstrap = document.createElement("script");
-            bootstrap.id = "sap-ui-bootstrap";
-            bootstrap.src = "https://sapui5.hana.ondemand.com/resources/sap-ui-core.js";
-            bootstrap.setAttribute("data-sap-ui-libs", "sap.m,sap.ushell");
-            bootstrap.setAttribute("data-sap-ui-theme", "sap_horizon");
-            bootstrap.setAttribute("data-sap-ui-compatVersion", "edge");
-            bootstrap.setAttribute("data-sap-ui-async", "true");
-            bootstrap.setAttribute("data-sap-ui-onInit", "module:sap/ushell/shells/sandbox/fioriSandbox");
-            bootstrap.setAttribute("data-sap-ui-xx-waitForTheme", "init");
-            document.head.appendChild(bootstrap);
+
+            const base = "https://sapui5.hana.ondemand.com/";
+            const load = (attrs) => new Promise((resolve, reject) => {
+                const s = document.createElement("script");
+                Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+                s.onload = resolve;
+                s.onerror = () => reject(new Error("Failed to load " + attrs.src));
+                document.head.appendChild(s);
+            });
+
+            // 1) ushell sandbox platform bootstrap must run BEFORE sap-ui-core.js
+            await load({ id: "sap-ushell-bootstrap", src: base + "test-resources/sap/ushell/bootstrap/sandbox.js" });
+            // 2) UI5 core; onInit creates the FLP renderer and places it into #canvas
+            await load({
+                id: "sap-ui-bootstrap",
+                src: base + "resources/sap-ui-core.js",
+                "data-sap-ui-libs": "sap.m",
+                "data-sap-ui-theme": "sap_horizon",
+                "data-sap-ui-compatVersion": "edge",
+                "data-sap-ui-async": "true",
+                "data-sap-ui-oninit": "module:sap/ushell/shells/sandbox/fioriSandboxInit",
+                "data-sap-ui-resourceroots": JSON.stringify({ "sap.ushell.shells.sandbox": base + "test-resources/sap/ushell/shells/sandbox/" })
+            });
         })();
     </script>
 </head>
-<body class="sapUiBody" id="content"></body>
+<body class="sapUiBody sapUShellFullHeight">
+    <div id="canvas" class="sapUShellFullHeight"></div>
+</body>
 </html>
