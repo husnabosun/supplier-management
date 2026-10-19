@@ -18,14 +18,24 @@
                 });
                 if (userResponse.ok) {
                     const currentUser = await userResponse.json();
-                    const fullName = currentUser.name || [currentUser.firstname, currentUser.lastname].filter(Boolean).join(" ");
-                    config.services.UserInfo.adapter.config.user = {
-                        id: currentUser.name || currentUser.email,
-                        firstName: currentUser.firstname || "",
-                        lastName: currentUser.lastname || "",
-                        fullName: fullName || currentUser.email || "",
-                        email: currentUser.email || ""
-                    };
+                    const fullName = [currentUser.firstname, currentUser.lastname].filter(Boolean).join(" ")
+                        || currentUser.displayName || currentUser.name || currentUser.email || "";
+                    // The local ushell ContainerAdapter reads services.Container.adapter.config
+                    // (flat keys id/firstName/lastName/fullName/email) over its DEFAULT_USER defaults.
+                    config.services = config.services || {};
+                    config.services.Container = config.services.Container || {};
+                    config.services.Container.adapter = config.services.Container.adapter || {};
+                    config.services.Container.adapter.config = Object.assign(
+                        {},
+                        config.services.Container.adapter.config,
+                        {
+                            id: currentUser.name || currentUser.email || "",
+                            firstName: currentUser.firstname || "",
+                            lastName: currentUser.lastname || "",
+                            fullName: fullName,
+                            email: currentUser.email || ""
+                        }
+                    );
                 }
             } catch (error) {
                 // Keep the shell usable when user information is temporarily unavailable.
