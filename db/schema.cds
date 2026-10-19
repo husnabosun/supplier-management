@@ -2,12 +2,18 @@ namespace supplier.management;
 
 using { managed, cuid } from '@sap/cds/common';
 
+/* type Category : String(50) enum { Hardware; Software; Other; } */
+
+
 entity Suppliers : cuid, managed {
     companyName      : String(100) not null;
     contactPerson    : String(100) not null;
     email            : String(255) ;
     phone            : String(30);
     country          : String(100);
+
+    /*category : Category @assert.range; */
+
     category         : String(50);
     taxNumber        : String(50);
     website          : String(255);
@@ -17,6 +23,12 @@ entity Suppliers : cuid, managed {
     certificateMimeType : String;
     status           : String(20) default 'SUBMITTED';
     submittedAt      : Timestamp;
+
+    /* Future change:
+    * remove submittedBy
+    * owner: Association to Users
+    */ 
+    
     submittedBy      : String(255);
     rejectionComment : String(1000);
      approvalComment  : String(1000);

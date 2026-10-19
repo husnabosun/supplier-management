@@ -53,6 +53,7 @@ service SupplierService {
     @requires: 'any'
     function myApplicationDetails(email: String) returns ApplicationDetails;
 
+    /* INSERT */
     @requires: 'any'
     action submitApplication(
         email               : String,
@@ -70,6 +71,8 @@ service SupplierService {
         certificateMimeType : String
     ) returns SubmitResult;
 
+    /* UPDATE */
+    /* DRY ? */
     @requires: 'any'
     action reapplyApplication(
         email               : String,

@@ -129,6 +129,15 @@ async function submitApplication(req) {
         return req.error(400, 'Only PDF files are allowed for the certificate.');
     }
 
+    // const certificateBuffer = Buffer.from(certificateContent, 'base64')
+    // if (certificateBuffer.length > MAX_CERTIFICATE_SIZE) {
+    //     return req.error(400, 'Certificate file must not exceed 10 MB.');
+    // }
+    
+    // if (!hasPdfSignature(certificateBuffer)) {
+    //     return req.error(400, 'The uploaded file is not a valid PDF.');
+    // }
+
     // --- File size check (base64 -> actual byte size) ---
     const sizeInBytes = getCertificateSizeInBytes(certificateContent);
     if (sizeInBytes > MAX_CERTIFICATE_SIZE) {

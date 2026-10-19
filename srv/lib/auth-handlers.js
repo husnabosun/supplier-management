@@ -8,6 +8,8 @@ function normalizeEmail(email) {
 
 async function register(req) {
     const { Users } = cds.entities(NAMESPACE);
+    // const {email, password} = req.data;
+    // const normalizedEmail = normalizeEmail(email);
     const email = normalizeEmail(req.data.email);
     const { password } = req.data;
 
@@ -46,9 +48,7 @@ async function login(req) {
         return req.error(400, 'Email and password are required.');
     }
 
-    // Fall back to the raw value so accounts created before normalization can still log in.
-    const user = await SELECT.one.from(Users).where({ email })
-        || await SELECT.one.from(Users).where({ email: req.data.email });
+    const user = await SELECT.one.from(Users).where({ email });
     // Keep the same error response for unknown users and incorrect passwords.
     if (!user) {
         return req.error(400, 'Invalid email or password.');
@@ -59,7 +59,7 @@ async function login(req) {
         return req.error(400, 'Invalid email or password.');
     }
 
-    return { success: true, message: 'Login successful.', email: user.email };
+    return { success: true, message: 'Login successful.', email: email };
 }
 
 module.exports = { register, login, normalizeEmail };

@@ -1,5 +1,9 @@
 const cds = require('@sap/cds');
 const { register, login } = require('./lib/auth-handlers');
+// Alternative way to import auth handlers
+// const auth = require('./lib/auth-handlers');
+// const register = auth.register;
+// const login = auth.login;
 const {
     myApplicationStatus, submitApplication, myApplicationDetails, reapplyApplication
 } = require('./lib/application-handlers');
